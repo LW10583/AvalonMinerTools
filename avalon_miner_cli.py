@@ -145,6 +145,24 @@ def format_timestamp(unix_time: int) -> str:
     return datetime.fromtimestamp(unix_time).strftime('%Y-%m-%d %H:%M:%S')
 
 
+def parse_estats_field(mm_id0: str, field_name: str) -> str:
+    """Parse a field from the MM ID0 string in ESTATS response"""
+    import re
+    pattern = rf'{field_name}\[([^\]]+)\]'
+    match = re.search(pattern, mm_id0)
+    return match.group(1) if match else None
+
+
+def get_work_mode_name(mode_value: str) -> str:
+    """Convert work mode number to name"""
+    mode_map = {
+        '0': 'Eco',
+        '1': 'Standard',
+        '2': 'Super'
+    }
+    return mode_map.get(mode_value, f'Unknown ({mode_value})')
+
+
 def check_status(response: Dict[str, Any]) -> bool:
     """Check if API response indicates success"""
     if 'STATUS' in response and len(response['STATUS']) > 0:
@@ -185,11 +203,30 @@ def cmd_summary(api: AvalonMinerAPI, args) -> None:
     """Get miner summary statistics"""
     response = api.send_command('summary')
 
+    # Get ESTATS for work mode and power info
+    estats_response = api.send_command('estats')
+    work_mode = None
+    power = None
+    if 'STATS' in estats_response and len(estats_response['STATS']) > 0:
+        stats = estats_response['STATS'][0] if isinstance(estats_response['STATS'], list) else estats_response['STATS']
+        mm_id0 = stats.get('MM ID0', '')
+        if mm_id0:
+            work_mode_val = parse_estats_field(mm_id0, 'WORKMODE')
+            if work_mode_val:
+                work_mode = get_work_mode_name(work_mode_val)
+            power_val = parse_estats_field(mm_id0, 'MPO')
+            if power_val:
+                power = f"{power_val}W"
+
     if 'SUMMARY' in response and len(response['SUMMARY']) > 0:
         summary = response['SUMMARY'][0] if isinstance(response['SUMMARY'], list) else response['SUMMARY']
 
         print("\n=== Miner Summary ===")
-        print(f"Hash Rate (avg)  : {format_hashrate(summary.get('MHS av', 0))}")
+        if work_mode:
+            print(f"Work Mode        : {work_mode}")
+        if power:
+            print(f"Power Output     : {power}")
+        print(f"\nHash Rate (avg)  : {format_hashrate(summary.get('MHS av', 0))}")
         print(f"Hash Rate (5s)   : {format_hashrate(summary.get('MHS 5s', 0))}")
         print(f"Hash Rate (1m)   : {format_hashrate(summary.get('MHS 1m', 0))}")
         print(f"Hash Rate (5m)   : {format_hashrate(summary.get('MHS 5m', 0))}")
@@ -306,6 +343,53 @@ def cmd_info(api: AvalonMinerAPI, args) -> None:
     summary_list = sum_response.get('SUMMARY', [])
     summary = summary_list[0] if isinstance(summary_list, list) and len(summary_list) > 0 else {}
 
+    # Get ESTATS for additional details
+    estats_response = api.send_command('estats')
+    work_mode = None
+    power = None
+    temp_max = None
+    temp_avg = None
+    temp_target = None
+    fan_rpm = None
+    fan_percent = None
+    uptime = None
+
+    if 'STATS' in estats_response and len(estats_response['STATS']) > 0:
+        stats = estats_response['STATS'][0] if isinstance(estats_response['STATS'], list) else estats_response['STATS']
+        mm_id0 = stats.get('MM ID0', '')
+        if mm_id0:
+            work_mode_val = parse_estats_field(mm_id0, 'WORKMODE')
+            if work_mode_val:
+                work_mode = get_work_mode_name(work_mode_val)
+
+            power_val = parse_estats_field(mm_id0, 'MPO')
+            if power_val:
+                power = f"{power_val}W"
+
+            temp_max_val = parse_estats_field(mm_id0, 'TMax')
+            if temp_max_val:
+                temp_max = f"{temp_max_val}°C"
+
+            temp_avg_val = parse_estats_field(mm_id0, 'TAvg')
+            if temp_avg_val:
+                temp_avg = f"{temp_avg_val}°C"
+
+            temp_target_val = parse_estats_field(mm_id0, 'TarT')
+            if temp_target_val:
+                temp_target = f"{temp_target_val}°C"
+
+            fan_rpm_val = parse_estats_field(mm_id0, 'Fan1')
+            if fan_rpm_val:
+                fan_rpm = f"{fan_rpm_val} RPM"
+
+            fan_percent_val = parse_estats_field(mm_id0, 'FanR')
+            if fan_percent_val:
+                fan_percent = fan_percent_val.replace('%', '') + '%'
+
+        elapsed = stats.get('Elapsed', 0)
+        if elapsed:
+            uptime = format_uptime(elapsed)
+
     print("\n" + "="*80)
     print("AVALON MINER INFORMATION")
     print("="*80)
@@ -314,6 +398,18 @@ def cmd_info(api: AvalonMinerAPI, args) -> None:
     print(f"Model            : {ver.get('MODEL', 'N/A')}")
     print(f"Serial Number    : {ver.get('DNA', 'N/A')}")
     print(f"Firmware         : {ver.get('LVERSION', ver.get('BVERSION', ver.get('CGVERSION', 'N/A')))}")
+    if uptime:
+        print(f"Uptime           : {uptime}")
+
+    print(f"\n--- Current Settings ---")
+    if work_mode:
+        print(f"Work Mode        : {work_mode}")
+    if power:
+        print(f"Power Output     : {power}")
+    if temp_max or temp_avg or temp_target:
+        print(f"Temperature      : Max={temp_max or 'N/A'}, Avg={temp_avg or 'N/A'}, Target={temp_target or 'N/A'}")
+    if fan_rpm or fan_percent:
+        print(f"Fan Speed        : {fan_rpm or 'N/A'} ({fan_percent or 'N/A'})")
 
     print(f"\n--- Hash Rate ---")
     print(f"Average          : {format_hashrate(summary.get('MHS av', 0))}")

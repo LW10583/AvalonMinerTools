@@ -203,10 +203,11 @@ def cmd_summary(api: AvalonMinerAPI, args) -> None:
     """Get miner summary statistics"""
     response = api.send_command('summary')
 
-    # Get ESTATS for work mode and power info
+    # Get ESTATS for work mode, power, and uptime info
     estats_response = api.send_command('estats')
     work_mode = None
     power = None
+    uptime = None
     if 'STATS' in estats_response and len(estats_response['STATS']) > 0:
         stats = estats_response['STATS'][0] if isinstance(estats_response['STATS'], list) else estats_response['STATS']
         mm_id0 = stats.get('MM ID0', '')
@@ -218,10 +219,27 @@ def cmd_summary(api: AvalonMinerAPI, args) -> None:
             if power_val:
                 power = f"{power_val}W"
 
+        elapsed = stats.get('Elapsed', 0)
+        if elapsed:
+            uptime = format_uptime(elapsed)
+
+    # Get LCD for difficulty info
+    lcd_response = api.send_command('lcd')
+    current_diff = None
+    best_diff = None
+    if 'LCD' in lcd_response and len(lcd_response['LCD']) > 0:
+        lcd = lcd_response['LCD'][0] if isinstance(lcd_response['LCD'], list) else lcd_response['LCD']
+        if 'Last Share Difficulty' in lcd:
+            current_diff = format_difficulty(lcd['Last Share Difficulty'])
+        if 'Best Share' in lcd:
+            best_diff = format_difficulty(lcd['Best Share'])
+
     if 'SUMMARY' in response and len(response['SUMMARY']) > 0:
         summary = response['SUMMARY'][0] if isinstance(response['SUMMARY'], list) else response['SUMMARY']
 
         print("\n=== Miner Summary ===")
+        if uptime:
+            print(f"Uptime           : {uptime}")
         if work_mode:
             print(f"Work Mode        : {work_mode}")
         if power:
@@ -233,6 +251,10 @@ def cmd_summary(api: AvalonMinerAPI, args) -> None:
         print(f"Hash Rate (15m)  : {format_hashrate(summary.get('MHS 15m', 0))}")
         print(f"\nPool Rejected%   : {summary.get('Pool Rejected%', 0):.4f}%")
         print(f"Pool Stale%      : {summary.get('Pool Stale%', 0):.4f}%")
+        if current_diff:
+            print(f"\nCurrent Diff     : {current_diff}")
+        if best_diff:
+            print(f"Best Diff        : {best_diff}")
         print()
 
     if args.json:

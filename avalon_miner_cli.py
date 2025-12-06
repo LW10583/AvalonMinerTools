@@ -268,11 +268,146 @@ def cmd_estats(api: AvalonMinerAPI, args) -> None:
     if args.json:
         print(json.dumps(response, indent=2))
     else:
-        print("\n=== Extended Statistics ===")
-        print("Note: Use --json flag to see full raw data")
-        print("\nResponse received successfully.")
-        print("Use 'info' command for parsed miner information.")
-        print()
+        if 'STATS' in response and len(response['STATS']) > 0:
+            stats = response['STATS'][0] if isinstance(response['STATS'], list) else response['STATS']
+            mm_id0 = stats.get('MM ID0', '')
+
+            print("\n" + "="*80)
+            print("EXTENDED MINER STATISTICS")
+            print("="*80)
+
+            # Basic info
+            print(f"\nDevice ID        : {stats.get('ID', 'N/A')}")
+            print(f"Uptime           : {format_uptime(stats.get('Elapsed', 0))}")
+
+            if mm_id0:
+                # Firmware/Version info
+                ver = parse_estats_field(mm_id0, 'Ver')
+                lver = parse_estats_field(mm_id0, 'LVer')
+                dna = parse_estats_field(mm_id0, 'DNA')
+                core = parse_estats_field(mm_id0, 'Core')
+
+                print(f"\n--- Firmware & Hardware ---")
+                if ver:
+                    print(f"Version          : {ver}")
+                if lver:
+                    print(f"Logic Version    : {lver}")
+                if dna:
+                    print(f"Serial Number    : {dna}")
+                if core:
+                    print(f"Core Type        : {core}")
+
+                # Work mode and performance
+                work_mode_val = parse_estats_field(mm_id0, 'WORKMODE')
+                freq = parse_estats_field(mm_id0, 'Freq')
+                ghs_avg = parse_estats_field(mm_id0, 'GHSavg')
+                ghs_spd = parse_estats_field(mm_id0, 'GHSspd')
+                wu = parse_estats_field(mm_id0, 'WU')
+                mpo = parse_estats_field(mm_id0, 'MPO')
+
+                print(f"\n--- Performance ---")
+                if work_mode_val:
+                    print(f"Work Mode        : {get_work_mode_name(work_mode_val)} (Mode {work_mode_val})")
+                if freq:
+                    print(f"Frequency        : {freq} MHz")
+                if ghs_avg:
+                    print(f"Hash Rate (Avg)  : {ghs_avg} GH/s ({float(ghs_avg)/1000:.2f} TH/s)")
+                if ghs_spd:
+                    print(f"Hash Rate (Curr) : {ghs_spd} GH/s ({float(ghs_spd)/1000:.2f} TH/s)")
+                if wu:
+                    print(f"Work Utility     : {wu}")
+                if mpo:
+                    print(f"Power Output     : {mpo}W")
+
+                # Temperature
+                tmax = parse_estats_field(mm_id0, 'TMax')
+                tavg = parse_estats_field(mm_id0, 'TAvg')
+                tart = parse_estats_field(mm_id0, 'TarT')
+                otemp = parse_estats_field(mm_id0, 'OTemp')
+                itemp = parse_estats_field(mm_id0, 'ITemp')
+
+                print(f"\n--- Temperature ---")
+                if tmax:
+                    print(f"Max Temp         : {tmax}°C")
+                if tavg:
+                    print(f"Average Temp     : {tavg}°C")
+                if tart:
+                    print(f"Target Temp      : {tart}°C")
+                if otemp:
+                    print(f"Outlet Temp      : {otemp}°C")
+                if itemp and itemp != '-273':
+                    print(f"Inlet Temp       : {itemp}°C")
+
+                # Fan
+                fan1 = parse_estats_field(mm_id0, 'Fan1')
+                fanr = parse_estats_field(mm_id0, 'FanR')
+
+                print(f"\n--- Cooling ---")
+                if fan1:
+                    print(f"Fan Speed        : {fan1} RPM")
+                if fanr:
+                    print(f"Fan Speed (%)    : {fanr}")
+
+                # Power supply
+                ps = parse_estats_field(mm_id0, 'PS')
+                if ps:
+                    import re
+                    ps_values = re.findall(r'-?\d+', ps)
+                    if len(ps_values) >= 7:
+                        print(f"\n--- Power Supply ---")
+                        print(f"Error Code       : {ps_values[0]}")
+                        print(f"Output Voltage   : {ps_values[2]} (raw)")
+                        print(f"Output Current   : {ps_values[3]} (raw)")
+                        print(f"Commanded Volt   : {ps_values[5]} (raw)")
+                        print(f"Output Power     : {ps_values[6]} (raw)")
+
+                # Hash/Error statistics
+                hw = parse_estats_field(mm_id0, 'HW')
+                dh = parse_estats_field(mm_id0, 'DH')
+                dhspd = parse_estats_field(mm_id0, 'DHspd')
+                lw = parse_estats_field(mm_id0, 'LW')
+
+                print(f"\n--- Statistics ---")
+                if lw:
+                    print(f"Local Work       : {lw}")
+                if hw:
+                    print(f"Hardware Errors  : {hw}")
+                if dh:
+                    print(f"Diff 1 Hashes    : {dh}")
+                if dhspd:
+                    print(f"DH Speed         : {dhspd}")
+
+                # System status
+                sys_status = parse_estats_field(mm_id0, 'SYSTEMSTATU')
+                memfree = parse_estats_field(mm_id0, 'MEMFREE')
+                ping = parse_estats_field(mm_id0, 'PING')
+
+                print(f"\n--- System ---")
+                if sys_status:
+                    print(f"System Status    : {sys_status}")
+                if memfree:
+                    print(f"Free Memory      : {memfree} KB")
+                if ping:
+                    print(f"Ping             : {ping} ms")
+
+                # Chip info (PLL frequencies and Temps)
+                pll0 = parse_estats_field(mm_id0, 'PLL0')
+                pvt_t0 = parse_estats_field(mm_id0, 'PVT_T0')
+
+                if pll0 or pvt_t0:
+                    print(f"\n--- Chip Details ---")
+                    if pll0:
+                        print(f"PLL Frequencies  : {pll0}")
+                    if pvt_t0:
+                        print(f"Chip Temps       : {pvt_t0}")
+
+            print()
+        else:
+            print("Error: No statistics data received")
+
+        if args.json:
+            print("\n--- RAW JSON ---")
+            print(json.dumps(response, indent=2))
 
 
 def cmd_lcd(api: AvalonMinerAPI, args) -> None:

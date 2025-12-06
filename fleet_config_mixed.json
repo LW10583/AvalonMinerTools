@@ -1,0 +1,11 @@
+{
+  "miners": [
+    "192.168.1.100",
+    "192.168.1.101-105",
+    "192.168.1.200",
+    "192.168.1.210-215"
+  ],
+  "interval": 20,
+  "port": 4028,
+  "_comment": "Mixed configuration with individual IPs and ranges"
+}

@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Original PowerShell source (excluded, see README for reference)
+AvalonPS7/
+
+# Intermediate/temporary documentation files
+PROJECT_SUMMARY.md
+FLEET_TOOL_SUMMARY.md
+FINAL_SUMMARY.txt
+TESTING_RESULTS.md
+
+# Test/Debug files
+*.log
+debug/
+test_*.py
+
+# Local configuration (users should copy from examples)
+fleet_config.json
+my_fleet.json
+local_*.json

@@ -147,8 +147,10 @@ def format_timestamp(unix_time: int) -> str:
 
 def check_status(response: Dict[str, Any]) -> bool:
     """Check if API response indicates success"""
-    if 'STATUS' in response:
-        status_msg = response['STATUS'].get('Msg', '')
+    if 'STATUS' in response and len(response['STATUS']) > 0:
+        # STATUS is an array, access first element
+        status = response['STATUS'][0] if isinstance(response['STATUS'], list) else response['STATUS']
+        status_msg = status.get('Msg', '')
         if 'ASC 0 set OK' in status_msg or 'OK' in status_msg:
             return True
     return False
@@ -387,7 +389,9 @@ def cmd_set_work_mode(api: AvalonMinerAPI, args) -> None:
     if check_status(response):
         print("Work mode set successfully")
     else:
-        print(f"Command response: {response.get('STATUS', {}).get('Msg', 'Unknown')}")
+        # STATUS is an array, access first element
+        status = response.get('STATUS', [{}])[0] if isinstance(response.get('STATUS'), list) else response.get('STATUS', {})
+        print(f"Command response: {status.get('Msg', 'Unknown')}")
 
     if args.json:
         print(json.dumps(response, indent=2))
@@ -416,8 +420,10 @@ def cmd_get_voltage(api: AvalonMinerAPI, args) -> None:
     """Get miner voltage information"""
     response = api.send_command('ascset', '0,voltage')
 
-    if 'STATUS' in response and 'Msg' in response['STATUS']:
-        msg = response['STATUS']['Msg']
+    if 'STATUS' in response and len(response['STATUS']) > 0:
+        # STATUS is an array, access first element
+        status = response['STATUS'][0] if isinstance(response['STATUS'], list) else response['STATUS']
+        msg = status.get('Msg', '')
         # Parse voltage string: PS[n0 n1 n2 n3 n4 n5 n6 n7 n8]
         if 'ASC 0 set info:' in msg:
             voltage_str = msg.replace('ASC 0 set info:', '').strip()
@@ -519,8 +525,9 @@ def cmd_set_pool(api: AvalonMinerAPI, args) -> None:
 
     response = api.send_command('setpool', params)
 
-    if 'STATUS' in response:
-        print(f"Response: {response['STATUS'].get('Msg', 'Unknown')}")
+    if 'STATUS' in response and len(response['STATUS']) > 0:
+        status = response['STATUS'][0] if isinstance(response['STATUS'], list) else response['STATUS']
+        print(f"Response: {status.get('Msg', 'Unknown')}")
 
     if args.json:
         print(json.dumps(response, indent=2))
@@ -535,8 +542,9 @@ def cmd_enable_pool(api: AvalonMinerAPI, args) -> None:
     print(f"\nEnabling pool {args.pool_id}...")
     response = api.send_command('enablepool', str(args.pool_id))
 
-    if 'STATUS' in response:
-        print(f"Response: {response['STATUS'].get('Msg', 'Unknown')}")
+    if 'STATUS' in response and len(response['STATUS']) > 0:
+        status = response['STATUS'][0] if isinstance(response['STATUS'], list) else response['STATUS']
+        print(f"Response: {status.get('Msg', 'Unknown')}")
 
     if args.json:
         print(json.dumps(response, indent=2))
@@ -551,8 +559,9 @@ def cmd_disable_pool(api: AvalonMinerAPI, args) -> None:
     print(f"\nDisabling pool {args.pool_id}...")
     response = api.send_command('disablepool', str(args.pool_id))
 
-    if 'STATUS' in response:
-        print(f"Response: {response['STATUS'].get('Msg', 'Unknown')}")
+    if 'STATUS' in response and len(response['STATUS']) > 0:
+        status = response['STATUS'][0] if isinstance(response['STATUS'], list) else response['STATUS']
+        print(f"Response: {status.get('Msg', 'Unknown')}")
 
     if args.json:
         print(json.dumps(response, indent=2))
@@ -567,8 +576,9 @@ def cmd_switch_pool(api: AvalonMinerAPI, args) -> None:
     print(f"\nSwitching to pool {args.pool_id}...")
     response = api.send_command('switchpool', str(args.pool_id))
 
-    if 'STATUS' in response:
-        print(f"Response: {response['STATUS'].get('Msg', 'Unknown')}")
+    if 'STATUS' in response and len(response['STATUS']) > 0:
+        status = response['STATUS'][0] if isinstance(response['STATUS'], list) else response['STATUS']
+        print(f"Response: {status.get('Msg', 'Unknown')}")
 
     if args.json:
         print(json.dumps(response, indent=2))
@@ -585,8 +595,9 @@ def cmd_set_pool_priority(api: AvalonMinerAPI, args) -> None:
     print(f"\nSetting pool priority to: {args.priority}")
     response = api.send_command('poolpriority', args.priority)
 
-    if 'STATUS' in response:
-        print(f"Response: {response['STATUS'].get('Msg', 'Unknown')}")
+    if 'STATUS' in response and len(response['STATUS']) > 0:
+        status = response['STATUS'][0] if isinstance(response['STATUS'], list) else response['STATUS']
+        print(f"Response: {status.get('Msg', 'Unknown')}")
 
     if args.json:
         print(json.dumps(response, indent=2))

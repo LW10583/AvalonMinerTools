@@ -85,12 +85,27 @@ python3 avalon_fleet.py --config fleet_config_example.json
 python3 avalon_fleet.py --config fleet.json --interval 30
 ```
 
+## Home Assistant Integration
+
+The `homeassistant/` directory contains a custom Home Assistant integration for
+Avalon miners, installable via [HACS](https://hacs.xyz). It communicates
+directly with the miner over TCP port 4028 -- no cloud required.
+
+**HACS repository:** [mkeller0815/HACS-Avalon-Miner](https://github.com/mkeller0815/HACS-Avalon-Miner)
+
+Features at a glance: real-time hashrate, temperature, fan and power sensors,
+work mode and fan speed controls, reboot and filter-reset buttons.
+
+See **[HOMEASSISTANT.md](HOMEASSISTANT.md)** for how the HACS release repo is
+published from this monorepo using `git subtree`.
+
 ## Documentation
 
 - **[README_CLI.md](README_CLI.md)** - Complete guide for single miner control
 - **[README_FLEET.md](README_FLEET.md)** - Complete guide for fleet monitoring
 - **[AVALON_MINER_API_DOCUMENTATION.md](AVALON_MINER_API_DOCUMENTATION.md)** - Full API reference
 - **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Quick command reference
+- **[HOMEASSISTANT.md](HOMEASSISTANT.md)** - HACS integration publishing guide
 
 ## Supported Miners
 

@@ -55,3 +55,6 @@ test_*.py
 fleet_config.json
 my_fleet.json
 local_*.json
+
+#ZIP files
+*.zip

@@ -88,17 +88,26 @@ That's it -- three commands to publish an update.
 
 ## Creating a release with a version tag
 
-HACS uses GitHub releases / tags as version identifiers. After pushing an
-update:
+HACS uses GitHub releases / tags as version identifiers.
+
+> **Important:** Tags must be created on the **subtree branch**, not in the
+> monorepo. A tag created in the monorepo points at the full repo tree, so the
+> source archive GitHub generates would contain *all* files instead of just the
+> `homeassistant/` subtree.
 
 ```bash
-# Tag in the monorepo (optional, for your own tracking)
-git tag v1.0.0
-git push origin v1.0.0
+# 1. Split the subtree (keep the branch around for tagging)
+git subtree split --prefix=homeassistant -b hacs-release-branch
 
-# Tag in the HACS release repo
-git push hacs-release hacs-release-branch:main --force   # if not already done
+# 2. Push the branch
+git push hacs-release hacs-release-branch:main --force
+
+# 3. Tag the subtree branch locally and push the tag
+git tag v1.0.0 hacs-release-branch
 git push hacs-release v1.0.0
+
+# 4. Clean up
+git branch -D hacs-release-branch
 ```
 
 Then go to **<https://github.com/mkeller0815/HACS-Avalon-Miner/releases>** and
@@ -117,6 +126,7 @@ create a GitHub release from the tag.
 | Split subtree | `git subtree split --prefix=homeassistant -b hacs-release-branch` |
 | Push to HACS repo | `git push hacs-release hacs-release-branch:main --force` |
 | Delete local branch | `git branch -D hacs-release-branch` |
+| Tag the subtree branch | `git tag v1.0.0 hacs-release-branch` |
 | Push version tag | `git push hacs-release v1.0.0` |
 
 ---
@@ -129,6 +139,7 @@ create a GitHub release from the tag.
 | Wrong files in HACS repo | Incorrect `--prefix` value (must be `homeassistant`, not `homeassistant/custom_components`) |
 | Push fails | Uncommitted changes in the monorepo -- commit or stash first |
 | HACS can't find integration | Missing `hacs.json` or `custom_components/` in the release repo root |
+| Release zip contains entire monorepo | Tag was created in the monorepo instead of on `hacs-release-branch` |
 
 ---
 

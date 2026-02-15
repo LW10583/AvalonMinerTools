@@ -37,6 +37,9 @@ env/
 # Original PowerShell source (excluded, see README for reference)
 AvalonPS7/
 
+# Reference Repo for 21Energy Ofen 2 HACS integration
+Referenz/
+
 # Intermediate/temporary documentation files
 PROJECT_SUMMARY.md
 FLEET_TOOL_SUMMARY.md
